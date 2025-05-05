@@ -1,1 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>國曆轉農曆查詢系統</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl p-6">
+            <h1 class="text-2xl font-bold text-center text-gray-800 mb-8">國曆轉農曆查詢系統</h1>
+
+            <div class="mb-6 space-y-4">
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label for="year" class="block text-sm font-medium text-gray-700 mb-2">年份</label>
+                        <select id="year" onchange="updateDays()"
+                            class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </select>
+                    </div>
+                    <div>
+                        <label for="month" class="block text-sm font-medium text-gray-700 mb-2">月份</label>
+                        <select id="month" onchange="updateDays()"
+                            class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </select>
+                    </div>
+                    <div>
+                        <label for="day" class="block text-sm font-medium text-gray-700 mb-2">日期</label>
+                        <select id="day"
+                            class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="convertDate()"
+                class="w-full bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors">
+                轉換
+            </button>
+
+            <div id="result" class="mt-6 hidden">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">轉換結果</h2>
+                <div class="space-y-2">
+                    <p class="text-gray-600">農曆年份：<span id="lunar-year" class="font-medium text-gray-800"></span></p>
+                    <p class="text-gray-600">農曆月份：<span id="lunar-month" class="font-medium text-gray-800"></span></p>
+                    <p class="text-gray-600">農曆日期：<span id="lunar-day" class="font-medium text-gray-800"></span></p>
+                    <p class="text-gray-600">生肖：<span id="zodiac" class="font-medium text-gray-800"></span></p>
+                    <p class="text-gray-600">年干支：<span id="gz-year" class="font-medium text-gray-800"></span></p>
+                    <p class="text-gray-600">立春時間：<span id="lichun-time" class="font-medium text-gray-800"></span></p>
+                    <p class="text-gray-600">立春狀態：<span id="lichun-status" class="font-medium text-gray-800"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 獲取今天的日期
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth() + 1; // JavaScript 月份從 0 開始
+        const currentDay = today.getDate();
+
+        // 初始化年份選單（1910-2030）
+        function initYearSelect() {
+            const yearSelect = document.getElementById('year');
+            for (let year = 1910; year <= 2030; year++) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year + '年';
+                yearSelect.appendChild(option);
+            }
+            // 設定預設年份
+            if (currentYear >= 1910 && currentYear <= 2030) {
+                yearSelect.value = currentYear;
+            }
+        }
+
+        // 初始化月份選單（1-12）
+        function initMonthSelect() {
+            const monthSelect = document.getElementById('month');
+            for (let month = 1; month <= 12; month++) {
+                const option = document.createElement('option');
+                option.value = month.toString().padStart(2, '0');
+                option.textContent = month + '月';
+                monthSelect.appendChild(option);
+            }
+            // 設定預設月份
+            monthSelect.value = currentMonth.toString().padStart(2, '0');
+        }
+
+        // 更新日期選單
+        function updateDays() {
+            const yearSelect = document.getElementById('year');
+            const monthSelect = document.getElementById('month');
+            const daySelect = document.getElementById('day');
+
+            const year = parseInt(yearSelect.value);
+            const month = parseInt(monthSelect.value);
+
+            // 清空現有的日期選項
+            daySelect.innerHTML = '';
+
+            // 計算該月的天數
+            let daysInMonth;
+            if (month === 2) {
+                // 閏年判斷
+                daysInMonth = ((year % 4 === 0 && year % 100 !== 0) || year % 400 === 0) ? 29 : 28;
+            } else if ([4, 6, 9, 11].includes(month)) {
+                daysInMonth = 30;
+            } else {
+                daysInMonth = 31;
+            }
+
+            // 新增日期選項
+            for (let day = 1; day <= daysInMonth; day++) {
+                const option = document.createElement('option');
+                option.value = day.toString().padStart(2, '0');
+                option.textContent = day + '日';
+                daySelect.appendChild(option);
+            }
+
+            // 設定預設日期
+            // 如果是當前月份，設定為今天的日期；否則設定為1日
+            if (year === currentYear && month === currentMonth) {
+                daySelect.value = currentDay.toString().padStart(2, '0');
+            } else {
+                daySelect.value = '01';
+            }
+        }
+
+        async function convertDate() {
+            const year = document.getElementById('year').value;
+            const month = document.getElementById('month').value;
+            const day = document.getElementById('day').value;
+            const resultDiv = document.getElementById('result');
+
+            const dateStr = `${year}-${month}-${day}`;
+
+            try {
+                const response = await fetch('/convert', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ date: dateStr }),
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('lunar-year').textContent = data.lunar_date.chinese_year;
+                    document.getElementById('lunar-month').textContent = data.lunar_date.month + '月';
+                    document.getElementById('lunar-day').textContent = data.lunar_date.day + '日';
+                    document.getElementById('zodiac').textContent = data.lunar_date.zodiac;
+                    document.getElementById('gz-year').textContent = data.lunar_date.gz_year;
+                    document.getElementById('lichun-time').textContent =
+                        new Date(data.lunar_date.lichun_time).toLocaleString('zh-TW');
+                    document.getElementById('lichun-status').textContent =
+                        data.lunar_date.is_after_lichun ? '已過立春' : '未過立春';
+                    resultDiv.classList.remove('hidden');
+                } else {
+                    alert('轉換失敗：' + data.error);
+                }
+            } catch (error) {
+                alert('發生錯誤：' + error.message);
+            }
+        }
+
+        // 頁面載入時初始化選單
+        document.addEventListener('DOMContentLoaded', function () {
+            initYearSelect();
+            initMonthSelect();
+            updateDays();
+            // 自動執行轉換
+            convertDate();
+        });
+    </script>
+</body>
+
+</html>
